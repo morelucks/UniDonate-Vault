@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi'
 import { mainnet, sepolia } from 'wagmi/chains'
-import { walletConnect } from 'wagmi/connectors'
+import { walletConnect, injected, metaMask } from 'wagmi/connectors'
 
 // Get projectId from environment variable
 // You need to get a project ID from https://cloud.reown.com
@@ -20,18 +20,24 @@ export const metadata = {
 // Create wagmi config
 export const config = createConfig({
   chains: [mainnet, sepolia],
-  connectors: projectId
-    ? [
-        walletConnect({
-          projectId,
-          metadata,
-          showQrModal: true,
-        }),
-      ]
-    : [],
+  connectors: [
+    // Injected wallets (MetaMask, etc.) - no QR code needed
+    injected(),
+    metaMask(),
+    // WalletConnect as fallback (requires QR code)
+    ...(projectId
+      ? [
+          walletConnect({
+            projectId,
+            metadata,
+            showQrModal: true,
+          }),
+        ]
+      : []),
+  ],
   transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
+    [mainnet.id]: http(), // Use wallet's RPC provider
+    [sepolia.id]: http(), // Use wallet's RPC provider
   },
 })
 

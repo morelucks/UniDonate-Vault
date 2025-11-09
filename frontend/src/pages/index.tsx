@@ -36,32 +36,18 @@ export default function Home() {
             Deposit once. Your principal stays safe while generated yield automatically supports Ethereum's ecosystem development.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            {isConnected ? (
-              <Link href="/dashboard">
-                <button className="bg-slate-900 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-slate-800 transition-colors inline-flex items-center gap-2">
-                  Open Dashboard
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </Link>
-            ) : (
-              <WalletConnect />
-            )}
-            {/* Test Mode: Allow viewing dashboard without wallet */}
-            <Link 
-              href="/dashboard"
-              onClick={() => localStorage.setItem('unidonate_test_mode', 'true')}
-            >
-              <button className="text-slate-600 px-6 py-4 rounded-xl font-semibold text-lg border-2 border-slate-300 hover:border-slate-400 hover:bg-slate-50 transition-colors inline-flex items-center gap-2">
-                View Dashboard (Test Mode)
+          {isConnected ? (
+            <Link href="/dashboard">
+              <button className="bg-slate-900 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-slate-800 transition-colors inline-flex items-center gap-2">
+                Open Dashboard
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </Link>
-          </div>
+          ) : (
+            <WalletConnect />
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 mt-16 pt-16 border-t border-slate-200">

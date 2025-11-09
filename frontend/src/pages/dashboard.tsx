@@ -11,19 +11,17 @@ export default function Dashboard() {
   const { isConnected, address } = useAccount()
   const router = useRouter()
   const [activeView, setActiveView] = useState<'overview' | 'history'>('overview')
-  const [testMode, setTestMode] = useState(false)
 
-  // Allow test mode - don't redirect if in test mode
+  // Redirect if not connected
   useEffect(() => {
-    // Check if user wants to test (you can add a query param or localStorage flag)
-    const testModeEnabled = localStorage.getItem('unidonate_test_mode') === 'true'
-    setTestMode(testModeEnabled)
-    
-    // Only redirect if not connected AND not in test mode
-    if (!isConnected && !testModeEnabled) {
-      // Don't auto-redirect, just show a warning
+    if (!isConnected) {
+      router.push('/')
     }
   }, [isConnected, router])
+
+  if (!isConnected) {
+    return null // Or a loading spinner
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -97,30 +95,6 @@ export default function Dashboard() {
       
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Test Mode Banner */}
-        {!isConnected && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">⚠️</span>
-                <div>
-                  <p className="text-sm font-semibold text-amber-900">Test Mode Active</p>
-                  <p className="text-xs text-amber-700">You're viewing the dashboard in test mode. Connect your wallet to interact with the vault.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  localStorage.setItem('unidonate_test_mode', 'true')
-                  setTestMode(true)
-                }}
-                className="text-xs px-3 py-1 bg-amber-100 text-amber-800 rounded-lg font-semibold hover:bg-amber-200 transition-colors"
-              >
-                Enable Test Mode
-              </button>
-            </div>
-          </div>
-        )}
-        
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>

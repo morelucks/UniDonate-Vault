@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useAccount, useContractRead, useContractWrite, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useChainId, useContractRead, useContractWrite, useWaitForTransactionReceipt } from 'wagmi'
 import { parseUnits, formatUnits } from 'viem'
 import { UNIDONATE_VAULT_ABI, UNIDONATE_VAULT_ADDRESS } from '../utils/contracts'
 
 export function useUniDonateVault() {
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
   const [userBalance, setUserBalance] = useState(0)
   const [totalTVL, setTotalTVL] = useState(0)
   const [userShares, setUserShares] = useState(0)
@@ -16,6 +17,7 @@ export function useUniDonateVault() {
     address: UNIDONATE_VAULT_ADDRESS,
     abi: UNIDONATE_VAULT_ABI,
     functionName: 'totalAssets',
+    enabled: !!address || true, // Allow reading TVL even when not connected
     watch: true,
   })
 
@@ -44,6 +46,7 @@ export function useUniDonateVault() {
     address: UNIDONATE_VAULT_ADDRESS,
     abi: UNIDONATE_VAULT_ABI,
     functionName: 'totalYieldDonated',
+    enabled: true, // Allow reading donations even when not connected
     watch: true,
   })
 
@@ -51,12 +54,28 @@ export function useUniDonateVault() {
   const { 
     data: depositData, 
     write: writeDeposit, 
-    isLoading: isDepositLoading 
+    isLoading: isDepositLoading,
+    isError: isDepositError,
+    error: depositError,
+    isSuccess: isDepositSuccess
   } = useContractWrite({
     address: UNIDONATE_VAULT_ADDRESS,
     abi: UNIDONATE_VAULT_ABI,
     functionName: 'deposit',
   })
+
+  // Debug: Log writeDeposit status
+  useEffect(() => {
+    if (isConnected && address) {
+      console.log('Contract Write Status:', {
+        hasWriteDeposit: !!writeDeposit,
+        isDepositError,
+        depositError,
+        chainId,
+        address: UNIDONATE_VAULT_ADDRESS
+      })
+    }
+  }, [writeDeposit, isDepositError, depositError, isConnected, address, chainId])
 
   const { isLoading: isDepositTxLoading } = useWaitForTransactionReceipt({
     hash: depositData?.hash,
@@ -125,7 +144,20 @@ export function useUniDonateVault() {
 
   // Deposit handler
   const deposit = (amount: string) => {
-    if (!amount || !address) return
+    if (!amount || !address || !isConnected) {
+      console.error('Cannot deposit: missing amount, address, or wallet not connected')
+      return
+    }
+    
+    if (!writeDeposit) {
+      console.error('Cannot deposit: writeDeposit is not available.', {
+        isConnected,
+        chainId,
+        address,
+        depositError
+      })
+      return
+    }
     
     try {
       const amountInWei = parseUnits(amount, 6) // USDC decimals
@@ -139,7 +171,15 @@ export function useUniDonateVault() {
 
   // Withdraw handler
   const withdraw = (amount: string) => {
-    if (!amount || !address) return
+    if (!amount || !address) {
+      console.error('Cannot withdraw: missing amount or address')
+      return
+    }
+    
+    if (!writeWithdraw) {
+      console.error('Cannot withdraw: writeWithdraw is not available. Make sure you are connected and on the correct network.')
+      return
+    }
     
     try {
       const amountInWei = parseUnits(amount, 6)
